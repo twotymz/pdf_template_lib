@@ -8,7 +8,7 @@ using iTextSharp.text.pdf.parser;
 
 namespace PdfTemplateLib
 {
-    class Processor
+    public class Processor
     {
         public List<Result> ProcessPDF(string pdfPath, string templatePath)
         {
@@ -21,7 +21,7 @@ namespace PdfTemplateLib
 
                 using (PdfReader reader = new PdfReader(pdfPath))
                 {
-                    for (int i = 1; i < reader.NumberOfPages)
+                    for (int i = 1; i <= reader.NumberOfPages; ++i)
                     {
                         string pdfText = PdfTextExtractor.GetTextFromPage(reader, i);
                         string[] pdfLines = pdfText.Split('\n');
@@ -40,7 +40,7 @@ namespace PdfTemplateLib
 
             using (PdfReader reader = new PdfReader(pdfPath))
             {
-                for (int i = 1; i < reader.NumberOfPages)
+                for (int i = 1; i <= reader.NumberOfPages; ++i)
                 {
                     string pdfText = PdfTextExtractor.GetTextFromPage(reader, i);
                     string[] pdfLines = pdfText.Split('\n');

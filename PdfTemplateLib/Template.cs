@@ -15,6 +15,7 @@ namespace PdfTemplateLib
         public string Row { get; set; }
         public string Seat { get; set; }
         public string Barcode { get; set; }
+        public string ConfNumber { get; set; }
     }
 
     public class Template
@@ -23,13 +24,18 @@ namespace PdfTemplateLib
         {
             public int LineNo { get; set; }
             public string Pattern { get; set; }
-        }        
-
+        }
+        
         List<Line> lines;
+        string defSection;
+        string defRow;
+        string defSeat;
 
         public Template()
         {
             lines = new List<Line>();
+            defSection = null;
+            defRow = null;
         }
 
         public bool Read (string templatePath)
@@ -64,6 +70,18 @@ namespace PdfTemplateLib
                         this.lines.Add(new Line { LineNo = line_no, Pattern = pattern });
                     }
                 }
+                else
+                {
+                    // This is a processing directive
+                    if (tokens[0] == "section")
+                    {
+                        defSection = string.Join(" ", tokens, 1, tokens.Length - 1);
+                    }
+                    else if (tokens[0] == "row")
+                    {
+                        defRow = string.Join(" ", tokens, 1, tokens.Length - 1);
+                    }
+                }
             }
 
             return true;
@@ -85,16 +103,29 @@ namespace PdfTemplateLib
                             results.Section = groups[groupname].Value;
                             break;
                         case "row":
-                            results.Section = groups[groupname].Value;
+                            results.Row = groups[groupname].Value;
                             break;
                         case "seat":
-                            results.Section = groups[groupname].Value;
+                            results.Seat = groups[groupname].Value;
                             break;
                         case "barcode":
                             results.Barcode = groups[groupname].Value;
                             break;
+                        case "confnum" :
+                            results.ConfNumber = groups[groupname].Value;
+                            break;
                     }
                 }
+            }
+
+            if (results.Section == null && defSection != null)
+            {
+                results.Section = defSection;
+            }
+
+            if (results.Row == null && defRow != null)
+            {
+                results.Row = defRow;
             }
 
             return results;
