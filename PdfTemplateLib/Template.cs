@@ -5,8 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
-using iTextSharp.text.pdf;
-using iTextSharp.text.pdf.parser;
+
 
 namespace PdfTemplateLib
 {
@@ -20,17 +19,17 @@ namespace PdfTemplateLib
 
     public class Template
     {
-        class TemplateLine
+        class Line
         {
             public int LineNo { get; set; }
             public string Pattern { get; set; }
         }        
 
-        List<TemplateLine> lines;
+        List<Line> lines;
 
         public Template()
         {
-            lines = new List<TemplateLine>();
+            lines = new List<Line>();
         }
 
         public bool Read (string templatePath)
@@ -62,7 +61,7 @@ namespace PdfTemplateLib
                     if (tokens.Length - 1 > 0)
                     {
                         string pattern = string.Join(" ", tokens, 1, tokens.Length - 1);
-                        this.lines.Add(new TemplateLine { LineNo = line_no, Pattern = pattern });
+                        this.lines.Add(new Line { LineNo = line_no, Pattern = pattern });
                     }
                 }
             }
@@ -70,11 +69,11 @@ namespace PdfTemplateLib
             return true;
         }
 
-        public Result Process (string[] pdfLines)
+        public Result Parse (string[] pdfLines)
         {
             Result results = new Result();
 
-            foreach (TemplateLine line in this.lines)
+            foreach (Line line in this.lines)
             {
                 Regex regex = new Regex(line.Pattern);
                 GroupCollection groups = regex.Match(pdfLines[line.LineNo]).Groups;
@@ -95,50 +94,6 @@ namespace PdfTemplateLib
                             results.Barcode = groups[groupname].Value;
                             break;
                     }
-                }
-            }
-
-            return results;
-        }
-    }
-
-    public class Processor
-    {
-        public List<Result> ProcessPDF (string pdfPath, string templatePath)
-        {
-            List<Result> results = null;
-            Template template = new Template();
-
-            if (template.Read(templatePath))
-            {
-                results = new List<Result>();
-
-                using (PdfReader reader = new PdfReader(pdfPath))
-                {
-                    for (int i = 1; i < reader.NumberOfPages)
-                    {
-                        string pdfText = PdfTextExtractor.GetTextFromPage(reader, i);
-                        string[] pdfLines = pdfText.Split('\n');
-                        results.Add(template.Process(pdfLines));
-                    }
-                }
-            }
-
-            return results;
-        }
-
-        public List<Result> ProcessPDF (string pdfPath, Template template)
-        {
-            List<Result> results = null;
-            results = new List<Result>();
-
-            using (PdfReader reader = new PdfReader(pdfPath))
-            {
-                for (int i = 1; i < reader.NumberOfPages)
-                {
-                    string pdfText = PdfTextExtractor.GetTextFromPage(reader, i);
-                    string[] pdfLines = pdfText.Split('\n');
-                    results.Add(template.Process(pdfLines));
                 }
             }
 
