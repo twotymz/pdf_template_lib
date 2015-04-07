@@ -25,7 +25,7 @@ namespace PdfTemplateLib
                     {
                         string pdfText = PdfTextExtractor.GetTextFromPage(reader, i);
                         string[] pdfLines = pdfText.Split('\n');
-                        results.Add(template.Parse(pdfLines));
+                        results.Add(template.Run(pdfPath, pdfLines));
                     }
                 }
             }
@@ -44,7 +44,7 @@ namespace PdfTemplateLib
                 {
                     string pdfText = PdfTextExtractor.GetTextFromPage(reader, i);
                     string[] pdfLines = pdfText.Split('\n');
-                    results.Add(template.Parse(pdfLines));
+                    results.Add(template.Run(pdfPath, pdfLines));
                 }
             }
 
