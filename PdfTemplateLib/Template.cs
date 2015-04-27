@@ -9,46 +9,15 @@ using System.Text.RegularExpressions;
 
 namespace PdfTemplateLib
 {
-    public class Result
-    {
-        public string Headliner { get; set; }
-        public string Venue { get; set; }
-        public string Date { get; set; }
-        public string Time { get; set; }
-        public string Section { get; set; }
-        public string Row { get; set; }
-        public string Seat { get; set; }
-        public string Barcode { get; set; }
-        public string ConfNumber { get; set; }
-    }
-
     public class Template
     {
-        class Line
-        {
-            public int LineNo { get; set; }
-            public string Pattern { get; set; }
-        }
-        
-        List<Line> lines;
-        string headliner;
-        string venue;
-        string date;
-        string time;
-        string section;
-        string row;
-        string path;
+        List<Command> text_commands;
+        List<Command> transform_commands;
 
         public Template()
         {
-            lines = new List<Line>();
-            headliner = null;
-            venue = null;
-            date = null;
-            time = null;
-            section = null;
-            row = null;
-            path = null;
+            text_commands = new List<Command>();
+            transform_commands = new List<Command>();
         }
 
         public bool Read (string templatePath)
@@ -86,85 +55,68 @@ namespace PdfTemplateLib
                     if (tokens.Length - 1 > 0)
                     {
                         string pattern = string.Join(" ", tokens, 1, tokens.Length - 1);
-                        this.lines.Add(new Line { LineNo = line_no, Pattern = pattern });
+                        this.text_commands.Add(new Command { Instruction = tokens[0], Args = pattern });
                     }
                 }
                 else
                 {
-                    // Deal with processing directives.
                     string val = string.Join(" ", tokens, 1, tokens.Length - 1);
                     switch (tokens[0])
                     {
-                        case "headliner":
-                            headliner = val;
-                            break;
-                        case "venue":
-                            venue = val;
-                            break;
-                        case "date":
-                            date = val;
-                            break;
-                        case "time":
-                            time = val;
-                            break;
-                        case "section":
-                            section = val;
-                            break;
-                        case "row":
-                            row = val;
-                            break;
-                        case "path":
-                            path = val;
+                        case "headliner" :
+                        case "venue" :
+                        case "date" :
+                        case "time" :
+                        case "section" :
+                        case "row" :
+                        case "path" :
+                        case "axs" :
+                            this.text_commands.Add(new Command { Instruction = tokens[0], Args = val });
                             break;
                     }
                 }
             }
         }
 
-        public Result Run (string pdfPath, string[] pdfLines)
+        public Result Run (string pdfPath)
         {
             Result results = new Result();
 
-            foreach (Line line in this.lines)
+            foreach (Command command in this.text_commands)
             {
-                process_regex(pdfLines[line.LineNo], line.Pattern, ref results);
-            }
+                int line_no;
 
-            if (path != null)
-            {
-                process_regex(pdfPath, path, ref results);
-            }
-
-            // Use default values if specified and if we didn't get anything from parsing
-            // the lines from the PDF.
-            if (results.Headliner == null && headliner != null)
-            {
-                results.Headliner = headliner;
-            }
-
-            if (results.Venue == null && venue != null)
-            {
-                results.Venue = venue;
-            }
-
-            if (results.Date == null && date != null)
-            {
-                results.Date = date;
-            }
-
-            if (results.Time == null && time != null)
-            {
-                results.Time = time;
-            }
-
-            if (results.Section == null && section != null)
-            {
-                results.Section = section;
-            }
-
-            if (results.Row == null && row != null)
-            {
-                results.Row = row;
+                if (int.TryParse(command.Instruction, out line_no))
+                {
+                    process_regex(pdfLines[line_no], command.Args, ref results);
+                }
+                else
+                {
+                    switch (command.Instruction)
+                    {
+                        case "path" :
+                            process_regex(pdfPath, command.Args, ref results);
+                            break;
+                        case "headliner" :
+                            results.Headliner = command.Args;
+                            break;
+                        case "venue" :
+                            results.Venue = command.Args;
+                            break;
+                        case "date" :
+                            results.Date = command.Args;
+                            break;
+                        case "time" :
+                            results.Time = command.Args;
+                            break;
+                        case "section" :
+                            results.Section = command.Args;
+                            break;
+                        case "row" :
+                            results.Row = command.Args;
+                            break;
+                    }
+                }
             }
 
             return results;
