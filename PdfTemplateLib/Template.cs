@@ -11,13 +11,13 @@ namespace PdfTemplateLib
 {
     public class Template
     {
-        List<Command> text_commands;
-        List<Command> transform_commands;
+        List<Command> commands;
+
+        public List<Command> Commands { get { return commands; } }
 
         public Template()
         {
-            text_commands = new List<Command>();
-            transform_commands = new List<Command>();
+            commands = new List<Command>();
         }
 
         public bool Read (string templatePath)
@@ -41,126 +41,53 @@ namespace PdfTemplateLib
 
             foreach (string l in lines)
             {
-                if (l.Length == 0 || l[0] == '#')
-                {
-                    continue;
-                }
-
-                string[] tokens = l.Split();
-                int line_no;
-
-                // This is a line definition.
-                if (int.TryParse(tokens[0], out line_no))
-                {
-                    if (tokens.Length - 1 > 0)
-                    {
-                        string pattern = string.Join(" ", tokens, 1, tokens.Length - 1);
-                        this.text_commands.Add(new Command { Instruction = tokens[0], Args = pattern });
-                    }
-                }
-                else
-                {
-                    string val = string.Join(" ", tokens, 1, tokens.Length - 1);
-                    switch (tokens[0])
-                    {
-                        case "headliner" :
-                        case "venue" :
-                        case "date" :
-                        case "time" :
-                        case "section" :
-                        case "row" :
-                        case "path" :
-                        case "axs" :
-                            this.text_commands.Add(new Command { Instruction = tokens[0], Args = val });
-                            break;
-                    }
-                }
+                AddLine(l);
             }
         }
-
-        public Result Run (string pdfPath)
+        
+        public void AddLine (string line)
         {
-            Result results = new Result();
-
-            foreach (Command command in this.text_commands)
+            if (line.Length == 0 || line[0] == '#')
             {
-                int line_no;
-
-                if (int.TryParse(command.Instruction, out line_no))
-                {
-                    process_regex(pdfLines[line_no], command.Args, ref results);
-                }
-                else
-                {
-                    switch (command.Instruction)
-                    {
-                        case "path" :
-                            process_regex(pdfPath, command.Args, ref results);
-                            break;
-                        case "headliner" :
-                            results.Headliner = command.Args;
-                            break;
-                        case "venue" :
-                            results.Venue = command.Args;
-                            break;
-                        case "date" :
-                            results.Date = command.Args;
-                            break;
-                        case "time" :
-                            results.Time = command.Args;
-                            break;
-                        case "section" :
-                            results.Section = command.Args;
-                            break;
-                        case "row" :
-                            results.Row = command.Args;
-                            break;
-                    }
-                }
+                return;
             }
 
-            return results;
-        }
+            string[] tokens = line.Split();
+            int line_no;
 
-        private void process_regex(string line, string pattern, ref Result results)
-        {
-            Regex regex = new Regex(pattern);
-            GroupCollection groups = regex.Match(line).Groups;
-            foreach (string groupname in regex.GetGroupNames())
+            // This is a line definition.
+            if (int.TryParse(tokens[0], out line_no))
             {
-                if (groups[groupname].Value.Length == 0)
+                if (tokens.Length - 1 > 0)
                 {
-                    continue;
+                    string pattern = string.Join(" ", tokens, 1, tokens.Length - 1);
+                    this.commands.Add(new Command { Instruction = tokens[0], Args = pattern });
                 }
-
-                switch (groupname)
-                {
+            }
+            else
+            {
+                string val = string.Join(" ", tokens, 1, tokens.Length - 1);
+                switch (tokens[0])
+                {                    
                     case "headliner":
-                        results.Headliner = groups[groupname].Value;
-                        break;
                     case "venue":
-                        results.Venue = groups[groupname].Value;
-                        break;
                     case "date":
-                        results.Date = groups[groupname].Value;
-                        break;
                     case "time":
-                        results.Time = groups[groupname].Value;
-                        break;
                     case "section":
-                        results.Section = groups[groupname].Value;
-                        break;
                     case "row":
-                        results.Row = groups[groupname].Value;
-                        break;
-                    case "seat":
-                        results.Seat = groups[groupname].Value;
-                        break;
-                    case "barcode":
-                        results.Barcode = groups[groupname].Value;
-                        break;
-                    case "confnum":
-                        results.ConfNumber = groups[groupname].Value;
+                    case "path":
+                    case "axs":
+                    case "rotate":
+                    case "save_bitmap":
+                    case "crop":
+                    case "rectangle":
+                    case "greyscale":
+                    case "reset" :
+                    case "text" :
+                    case "save_text" :
+                    case "ocr" :
+                    case "dpi" :
+                        this.commands.Add(new Command { Instruction = tokens[0], Args = val });
                         break;
                 }
             }
