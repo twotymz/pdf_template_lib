@@ -31,7 +31,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Ghostscript.NET">
-      <HintPath>..\..\PdfTemplateDevTool\packages\Ghostscript.NET.1.2.0\lib\net40\Ghostscript.NET.dll</HintPath>
+      <HintPath>..\..\pdf_template_tool\packages\Ghostscript.NET.1.2.0\lib\net40\Ghostscript.NET.dll</HintPath>
     </Reference>
     <Reference Include="itextsharp">
       <HintPath>..\packages\iTextSharp.5.5.5\lib\itextsharp.dll</HintPath>
@@ -45,7 +45,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="Tesseract">
-      <HintPath>..\..\PdfTemplateDevTool\packages\Tesseract.2.3.0.0\lib\net45\Tesseract.dll</HintPath>
+      <HintPath>..\..\pdf_template_tool\packages\Tesseract.2.3.0.0\lib\net45\Tesseract.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

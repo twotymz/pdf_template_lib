@@ -17,11 +17,19 @@ namespace PdfTemplateLib
     {
         string[] text = null;
         Bitmap bitmap = null;
-        int dpi_x = 300;
-        int dpi_y = 300;
+        int dpiX = 300;
+        int dpiY = 300;
 
         public string[] Text { get { return text;  } }
         public Bitmap Bitmap { get { return bitmap; } }
+
+        ~Processor ()
+        {
+            if (bitmap != null)
+            {
+                bitmap.Dispose();
+            }
+        }
 
         public Result ProcessPDF(string pdfPath, string templatePath)
         {
@@ -37,6 +45,11 @@ namespace PdfTemplateLib
 
         public Result ProcessPDF(string pdfPath, Template template)
         {
+            if (bitmap != null)
+            {
+                bitmap.Dispose();
+            }
+
             text = null;
             bitmap = null;
 
@@ -66,55 +79,85 @@ namespace PdfTemplateLib
                         case "path":
                             processRegex(pdfPath, command.Args, ref result);
                             break;
+
                         case "headliner":
                             result.Headliner = command.Args;
                             break;
+
                         case "venue":
                             result.Venue = command.Args;
                             break;
+
                         case "date":
                             result.Date = command.Args;
                             break;
+
                         case "time":
                             result.Time = command.Args;
                             break;
+
                         case "section":
                             result.Section = command.Args;
                             break;
+
                         case "row":
                             result.Row = command.Args;
                             break;
+
                         case "axs":
-                            Result r = Axs.Process(pdfPath);
-                            result.Barcode = r.Barcode;
+                            {
+                                Result r = Axs.Process(pdfPath);
+                                result.Barcode = r.Barcode;
+                            }
                             break;
+
                         case "rotate":
-                            setupBitmap(pdfPath);
+                            getBitmap(pdfPath);
                             BitmapProcessor.Rotate(ref bitmap, command.ToInt());
                             break;
+
                         case "save_bitmap":
-                            setupBitmap(pdfPath);
+                            getBitmap(pdfPath);
                             bitmap.Save(command.Args);
                             break;
+
                         case "crop":
-                            setupBitmap(pdfPath);
-                            bitmap = BitmapProcessor.Crop(bitmap, command.ToRect());
+                            {
+                                getBitmap(pdfPath);
+                                Bitmap newBitmap = BitmapProcessor.Crop(bitmap, command.ToRect());
+                                bitmap.Dispose();
+                                bitmap = newBitmap;
+                            }
                             break;
+
                         case "rectangle":
-                            setupBitmap(pdfPath);
+                            getBitmap(pdfPath);
                             BitmapProcessor.Rectangle(ref bitmap, command.ToRect());
                             break;
+
                         case "greyscale":
-                            setupBitmap(pdfPath);
-                            bitmap = BitmapProcessor.GreyScale(bitmap);
-                            break;
+                            {
+                                getBitmap(pdfPath);
+                                Bitmap newBitmap = BitmapProcessor.GreyScale(bitmap);
+                                bitmap.Dispose();
+                                bitmap = newBitmap;
+                            }  break;
+
                         case "reset" :
+                            if (bitmap != null)
+                            {
+                                bitmap.Dispose();
+                            }
                             text = null;
                             bitmap = null;
+                            dpiX = 300;
+                            dpiY = 300;
                             break;
+
                         case "text" :
                             extractText(pdfPath);
                             break;
+
                         case "save_text" :
                             extractText(pdfPath);
                             if (text != null)
@@ -122,19 +165,23 @@ namespace PdfTemplateLib
                                 System.IO.File.WriteAllText(command.Args, string.Join("\n", text));
                             }
                             break;
+
                         case "ocr" :
-                            setupBitmap(pdfPath);
+                            getBitmap(pdfPath);
                             extractText(pdfPath);
                             break;
-                        case "dpi" :
-                            int x, y;
-                            string[] args = command.Args.Split(' ');
-                            if (int.TryParse(args[0], out x))
+
+                        case "dpi":
                             {
-                                if (int.TryParse(args[1], out y))
+                                int x, y;
+                                string[] args = command.Args.Split(' ');
+                                if (int.TryParse(args[0], out x))
                                 {
-                                    dpi_x = x;
-                                    dpi_y = y;
+                                    if (int.TryParse(args[1], out y))
+                                    {
+                                        dpiX = x;
+                                        dpiY = y;
+                                    }
                                 }
                             }
                             break;
@@ -164,7 +211,6 @@ namespace PdfTemplateLib
                 try
                 {
                     string tessDataPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "tessdata");
-
                     using (var engine = new TesseractEngine(@".\tessdata", "eng", EngineMode.Default))
                     {
                         using (var img = Pix.LoadTiffFromMemory(BitmapProcessor.ToTiffBytes(bitmap)))
@@ -231,21 +277,16 @@ namespace PdfTemplateLib
             }
         }
 
-        private void setupBitmap (string pdfPath)
+        private void getBitmap (string pdfPath)
         {
             if (bitmap == null)
             {
-                bitmap = pdfToBitmap(pdfPath);
-            }
-        }
-        
-        private Bitmap pdfToBitmap (string pdfPath)
-        {
-            using (var rasterizer = new GhostscriptRasterizer())
-            {
-                rasterizer.Open(pdfPath);
-                var image = rasterizer.GetPage(dpi_x, dpi_y, 1);
-                return new Bitmap(image);
+                using (var rasterizer = new GhostscriptRasterizer())
+                {
+                    rasterizer.Open(pdfPath);
+                    var image = rasterizer.GetPage(dpiX, dpiY, 1);
+                    bitmap = new Bitmap(image);
+                }  
             }
         }
     }

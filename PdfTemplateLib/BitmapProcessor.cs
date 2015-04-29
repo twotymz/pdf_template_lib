@@ -34,6 +34,7 @@ namespace PdfTemplateLib
         public static Bitmap Crop (Bitmap bmp, Rectangle cropRect)
         {
             Bitmap output = new Bitmap(cropRect.Width, cropRect.Height);
+
             using (Graphics g = Graphics.FromImage(output))
             {
                 g.DrawImage(bmp, new Rectangle(0, 0, output.Width, output.Height), cropRect, GraphicsUnit.Pixel);
