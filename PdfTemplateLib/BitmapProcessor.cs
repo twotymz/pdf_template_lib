@@ -49,6 +49,7 @@ namespace PdfTemplateLib
             {
                 Pen pen = new Pen (Color.Red);
                 g.DrawRectangle(pen, rect);
+                pen.Dispose();
             }
         }
 
@@ -74,6 +75,8 @@ namespace PdfTemplateLib
                         0, 0, original.Width, original.Height, GraphicsUnit.Pixel, attributes);
 
             g.Dispose();
+            attributes.Dispose();
+
             return newBitmap;
         }
 

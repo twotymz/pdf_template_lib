@@ -13,7 +13,7 @@ using Tesseract;
 
 namespace PdfTemplateLib
 {
-    public class Processor
+    public class Processor : IDisposable
     {
         string[] text = null;
         Bitmap bitmap = null;
@@ -23,7 +23,7 @@ namespace PdfTemplateLib
         public string[] Text { get { return text;  } }
         public Bitmap Bitmap { get { return bitmap; } }
 
-        ~Processor ()
+        public void Dispose ()
         {
             if (bitmap != null)
             {
@@ -203,8 +203,10 @@ namespace PdfTemplateLib
 
             if (bitmap == null)
             {
-                PdfReader reader = new PdfReader(pdfPath);
-                pdfText = PdfTextExtractor.GetTextFromPage(reader, 1);
+                using (PdfReader reader = new PdfReader(pdfPath)) 
+                {
+                    pdfText = PdfTextExtractor.GetTextFromPage(reader, 1);
+                }
             }
             else
             {
@@ -284,8 +286,7 @@ namespace PdfTemplateLib
                 using (var rasterizer = new GhostscriptRasterizer())
                 {
                     rasterizer.Open(pdfPath);
-                    var image = rasterizer.GetPage(dpiX, dpiY, 1);
-                    bitmap = new Bitmap(image);
+                    bitmap = (Bitmap) rasterizer.GetPage(dpiX, dpiY, 1);
                 }  
             }
         }
