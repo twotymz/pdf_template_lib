@@ -8,7 +8,7 @@ namespace PdfTemplateLib
 {
     class Axs
     {
-        static public Result Process (string pdfPath)
+        static public Result Process (string pdfPath, int page)
         {
             Template template = new Template();
             Processor processor = new Processor();
@@ -17,7 +17,7 @@ namespace PdfTemplateLib
             template.AddLine("crop 1904 350 336 43");
             template.AddLine("0 ^(?<barcode>\\d+)$");
 
-            return processor.ProcessPDF(pdfPath, template);
+            return processor.ProcessPDFPage(pdfPath, template, page);
         }
     }
 }

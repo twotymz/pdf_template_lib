@@ -31,7 +31,7 @@ namespace PdfTemplateLib
             }
         }
 
-        public Result ProcessPDF(string pdfPath, string templatePath)
+        public List<Result> ProcessPDF(string pdfPath, string templatePath)
         {
             Template template = new Template();
             
@@ -43,7 +43,26 @@ namespace PdfTemplateLib
             return null;
         }
 
-        public Result ProcessPDF(string pdfPath, Template template)
+        public List<Result> ProcessPDF(string pdfPath, Template template)
+        {
+            List<Result> results = new List<Result>();
+            int numPages = 0;
+
+            using (PdfReader reader = new PdfReader(pdfPath))
+            {
+                numPages = reader.NumberOfPages;
+            }
+
+            for (int page = 1; page <= numPages; ++page)
+            {
+                Result result = ProcessPDFPage(pdfPath, template, page);
+                results.Add(result);
+            }
+
+            return results;
+        }
+
+        public Result ProcessPDFPage (string pdfPath, Template template, int page)
         {
             if (bitmap != null)
             {
@@ -53,12 +72,8 @@ namespace PdfTemplateLib
             text = null;
             bitmap = null;
 
-            return Run(pdfPath, template);
-        }
-
-        private Result Run(string pdfPath, Template template)
-        {
             Result result = new Result();
+            result.Page = page;
 
             foreach (Command command in template.Commands)
             {
@@ -66,7 +81,7 @@ namespace PdfTemplateLib
 
                 if (int.TryParse(command.Instruction, out line_no))
                 {
-                    extractText(pdfPath);
+                    extractText(pdfPath, page);
                     if (text != null)
                     {
                         processRegex(text[line_no], command.Args, ref result);
@@ -106,24 +121,24 @@ namespace PdfTemplateLib
 
                         case "axs":
                             {
-                                Result r = Axs.Process(pdfPath);
+                                Result r = Axs.Process(pdfPath, page);
                                 result.Barcode = r.Barcode;
                             }
                             break;
 
                         case "rotate":
-                            getBitmap(pdfPath);
+                            getBitmap(pdfPath, page);
                             BitmapProcessor.Rotate(ref bitmap, command.ToInt());
                             break;
 
                         case "save_bitmap":
-                            getBitmap(pdfPath);
+                            getBitmap(pdfPath, page);
                             bitmap.Save(command.Args);
                             break;
 
                         case "crop":
                             {
-                                getBitmap(pdfPath);
+                                getBitmap(pdfPath, page);
                                 Bitmap newBitmap = BitmapProcessor.Crop(bitmap, command.ToRect());
                                 bitmap.Dispose();
                                 bitmap = newBitmap;
@@ -131,13 +146,13 @@ namespace PdfTemplateLib
                             break;
 
                         case "rectangle":
-                            getBitmap(pdfPath);
+                            getBitmap(pdfPath, page);
                             BitmapProcessor.Rectangle(ref bitmap, command.ToRect());
                             break;
 
                         case "greyscale":
                             {
-                                getBitmap(pdfPath);
+                                getBitmap(pdfPath, page);
                                 Bitmap newBitmap = BitmapProcessor.GreyScale(bitmap);
                                 bitmap.Dispose();
                                 bitmap = newBitmap;
@@ -155,11 +170,11 @@ namespace PdfTemplateLib
                             break;
 
                         case "text" :
-                            extractText(pdfPath);
+                            extractText(pdfPath, page);
                             break;
 
                         case "save_text" :
-                            extractText(pdfPath);
+                            extractText(pdfPath, page);
                             if (text != null)
                             {
                                 System.IO.File.WriteAllText(command.Args, string.Join("\n", text));
@@ -167,8 +182,8 @@ namespace PdfTemplateLib
                             break;
 
                         case "ocr" :
-                            getBitmap(pdfPath);
-                            extractText(pdfPath);
+                            getBitmap(pdfPath, page);
+                            extractText(pdfPath, page);
                             break;
 
                         case "dpi":
@@ -192,7 +207,7 @@ namespace PdfTemplateLib
             return result;
         }
 
-        private void extractText(string pdfPath)
+        private void extractText(string pdfPath, int page)
         {
             if (text != null)
             {
@@ -205,7 +220,7 @@ namespace PdfTemplateLib
             {
                 using (PdfReader reader = new PdfReader(pdfPath)) 
                 {
-                    pdfText = PdfTextExtractor.GetTextFromPage(reader, 1);
+                    pdfText = PdfTextExtractor.GetTextFromPage(reader, page);
                 }
             }
             else
@@ -217,9 +232,9 @@ namespace PdfTemplateLib
                     {
                         using (var img = Pix.LoadTiffFromMemory(BitmapProcessor.ToTiffBytes(bitmap)))
                         {
-                            using (var page = engine.Process(img))
+                            using (var tessPage = engine.Process(img))
                             {
-                                pdfText = page.GetText();
+                                pdfText = tessPage.GetText();
                             }
                         }
                     }
@@ -279,14 +294,14 @@ namespace PdfTemplateLib
             }
         }
 
-        private void getBitmap (string pdfPath)
+        private void getBitmap (string pdfPath, int page)
         {
             if (bitmap == null)
             {
                 using (var rasterizer = new GhostscriptRasterizer())
                 {
                     rasterizer.Open(pdfPath);
-                    bitmap = (Bitmap) rasterizer.GetPage(dpiX, dpiY, 1);
+                    bitmap = (Bitmap) rasterizer.GetPage(dpiX, dpiY, page);
                 }  
             }
         }

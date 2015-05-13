@@ -8,6 +8,7 @@ namespace PdfTemplateLib
 {
     public class Result
     {
+        public int Page { get; set; }
         public string Headliner { get; set; }
         public string Venue { get; set; }
         public string Date { get; set; }
