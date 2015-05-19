@@ -9,9 +9,33 @@ namespace PdfTemplateLib
 {
     public class Command
     {
-        public string Instruction { get; set; }
-        public string Args { get; set; }
+        public enum Opcode
+        {
+            OP_HEADLINER,       // "headliner" string
+            OP_VENUE,           // "venue" string
+            OP_DATE,            // "date" string
+            OP_TIME,            // "time" string
+            OP_SECTION,         // "section" string
+            OP_ROW,             // "row" string
+            OP_PATH,            // "path" string
+            OP_AXS,             // "axs"
+            OP_ROTATE,          // "rotate" integer
+            OP_SAVE_BITMAP,     // "save_bitmap" string
+            OP_CROP,            // "crop" integer integer integer integer
+            OP_RECTANGLE,       // "rectange" integer integer integer integer
+            OP_GREYSCALE,       // "greyscale"
+            OP_RESET,           // "reset"
+            OP_TEXT,            // "text"
+            OP_SAVE_TEXT,       // "save_text" string
+            OP_OCR,             // "ocr"
+            OP_DPI,             // "dpi" integer integer
+            OP_REGEX            // integer string
+        }
 
+        public Opcode Code { get; set; }
+        public List<string> Args { get; set; }
+
+        /*
         public int ToInt ()
         {
             int v;
@@ -46,5 +70,6 @@ namespace PdfTemplateLib
 
             return new Rectangle(0, 0, 0, 0);
         }
+         */
     }
 }

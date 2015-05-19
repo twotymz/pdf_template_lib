@@ -19,6 +19,8 @@ namespace PdfTemplateLib
         Bitmap bitmap = null;
         int dpiX = 300;
         int dpiY = 300;
+        bool filterNonAscii = false;
+        bool filterEmptyLines = true;
 
         public string[] Text { get { return text;  } }
         public Bitmap Bitmap { get { return bitmap; } }
@@ -246,7 +248,17 @@ namespace PdfTemplateLib
 
             if (pdfText != null)
             {
+                if (filterNonAscii)
+                {
+                    pdfText = Regex.Replace(pdfText, @"[^\u0000-\u007F]", string.Empty);
+                }
+
                 text = pdfText.Split('\n');
+
+                if (filterEmptyLines)
+                {
+                    text = text.Where(l => l.Trim().Length > 0).ToArray();
+                }
             }
         }
 

@@ -61,33 +61,67 @@ namespace PdfTemplateLib
                 if (tokens.Length - 1 > 0)
                 {
                     string pattern = string.Join(" ", tokens, 1, tokens.Length - 1);
-                    this.commands.Add(new Command { Instruction = tokens[0], Args = pattern });
+                    this.commands.Add(new Command { Code = Command.Opcode.OP_REGEX, Args = pattern });
                 }
             }
             else
             {
-                string val = string.Join(" ", tokens, 1, tokens.Length - 1);
+                Command.Opcode opcode;
                 switch (tokens[0])
                 {                    
                     case "headliner":
+                        opcode = Command.Opcode.OP_HEADLINER;
+                        break;
                     case "venue":
+                        opcode = Command.Opcode.OP_VENUE;
+                        break;
                     case "date":
+                        opcode = Command.Opcode.OP_DATE;
+                        break;
                     case "time":
+                        opcode = Command.Opcode.OP_TIME;
+                        break;
                     case "section":
+                        opcode = Command.Opcode.OP_SECTION;
+                        break;
                     case "row":
+                        opcode = Command.Opcode.OP_ROW;
+                        break;
                     case "path":
+                        opcode = Command.Opcode.OP_PATH;
+                        break;
                     case "axs":
+                        opcode = Command.Opcode.OP_AXS;
+                        break;
                     case "rotate":
+                        opcode = Command.Opcode.OP_ROTATE;
+                        break;
                     case "save_bitmap":
+                        opcode = Command.Opcode.OP_SAVE_BITMAP;
+                        break;
                     case "crop":
+                        opcode = Command.Opcode.OP_CROP;
+                        break;
                     case "rectangle":
+                        opcode = Command.Opcode.OP_RECTANGLE;
+                        break;
                     case "greyscale":
+                        opcode = Command.Opcode.OP_GREYSCALE;
+                        break;
                     case "reset" :
+                        opcode = Command.Opcode.OP_RESET;
+                        break;
                     case "text" :
+                        opcode = Command.Opcode.OP_TEXT;
+                        break;
                     case "save_text" :
+                        opcode = Command.Opcode.OP_SAVE_TEXT;
+                        break;
                     case "ocr" :
+                        opcode = Command.Opcode.OP_OCR;
+                        break;
                     case "dpi" :
-                        this.commands.Add(new Command { Instruction = tokens[0], Args = val });
+                        opcode = Command.Opcode.OP_DPI;
                         break;
                 }
             }
